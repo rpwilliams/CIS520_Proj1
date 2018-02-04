@@ -24,6 +24,9 @@ static int64_t ticks;
    Initialized by timer_calibrate(). */
 static unsigned loops_per_tick;
 
+/* The list of sleeping threads */
+// static thread* sleeping_threads;
+
 static intr_handler_func timer_interrupt;
 static bool too_many_loops (unsigned loops);
 static void busy_wait (int64_t loops);
@@ -90,6 +93,8 @@ void
 timer_sleep (int64_t ticks) 
 {
   int64_t start = timer_ticks ();
+
+  // add_thread_to_list(thread_current());
 
   ASSERT (intr_get_level () == INTR_ON);
   while (timer_elapsed (start) < ticks) 
@@ -244,3 +249,17 @@ real_time_delay (int64_t num, int32_t denom)
   ASSERT (denom % 1000 == 0);
   busy_wait (loops_per_tick * num / 1000 * TIMER_FREQ / (denom / 1000)); 
 }
+
+/* Add a thread to the list */
+void
+add_thread_to_list (struct thread* t) {
+  // if(t == NULL) {
+  //   printf("t is NULL");
+  //   t = (*t)malloc(sizeof(*t));
+  // }
+  // else {
+  //   printf("t is not null and its name is %s", thread_name());
+  // }
+
+}
+

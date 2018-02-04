@@ -26,4 +26,6 @@ void timer_ndelay (int64_t nanoseconds);
 
 void timer_print_stats (void);
 
+// void add_thread_to_list()
+
 #endif /* devices/timer.h */
