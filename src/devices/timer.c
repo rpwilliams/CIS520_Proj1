@@ -40,6 +40,13 @@ timer_init (void)
 {
   pit_configure_channel (0, 2, TIMER_FREQ);
   intr_register_ext (0x20, timer_interrupt, "8254 Timer");
+
+  /* Initialize the list */
+  struct thread* t = thread_current();
+  if(sleeping_threads == NULL) {
+    printf("Sleeping threads is null in thread %s Initializing...\n", thread_name());
+    sleeping_threads = malloc(sizeof(*(sleeping_threads)) + sizeof(*t));
+  }
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -95,10 +102,16 @@ timer_sleep (int64_t ticks)
   int64_t start = timer_ticks ();
 
   /* Get the total ticks, and add that as the sleeping ticks to the current thread */
-  int64_t current_ticks = ticks + start;
+  int64_t wake_up_ticks = ticks + start;
   struct thread* t = thread_current();
-  // *t->sleep_ticks = current_ticks;
+  t->sleep_ticks = wake_up_ticks;
 
+  if(sleeping_threads != NULL) {
+    printf("Sleeping threads is not null in thread %s. Adding to the list.\n", thread_name());
+    sleeping_threads = realloc(sleeping_threads, sizeof(*(sleeping_threads))  + sizeof(*t));
+    int n = sizeof(*(sleeping_threads)) - sizeof(*t);
+  }
+  
 
   // add_thread_to_list(thread_current());
 
