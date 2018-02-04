@@ -206,9 +206,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
 
   /* Iterate through the list and see if it needs to be woken up */
   for(int i = 0; i < sizeof(sleeping_threads); i++) {
-    struct thread* t = thread_current();
-
-    printf("Ticks: %d | Name: %s | Sleep ticks: %d | Timer_ticks(): %d\n",ticks, thread_name(), sleeping_threads[i].sleep_ticks, ticks);
+    printf("Ticks: %d | Name: %s | Sleep ticks: %d | Timer_ticks(): %d\n",ticks, sleeping_threads[i].name, sleeping_threads[i].sleep_ticks, ticks);
     if(sleeping_threads[i].sleep_ticks >= ticks) {
       sema_up(&sleeping_threads[i].timer_sema);
       printf("Ticks: %d | Name: %s | Sleep ticks: %d | Timer_ticks(): %d\n",ticks, thread_name(), sleeping_threads[i].sleep_ticks, ticks);
@@ -217,7 +215,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
       for(int j = i; j < sizeof(sleeping_threads - 1); j++) {
         sleeping_threads[j] = sleeping_threads[j+1];
       }
-      sleeping_threads = realloc(sleeping_threads, sizeof(*(sleeping_threads))  - sizeof(*t));
+      sleeping_threads = realloc(sleeping_threads, sizeof(*(sleeping_threads))  - sizeof(sleeping_threads[i]));
     }
 
   }
