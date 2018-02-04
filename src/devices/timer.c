@@ -110,15 +110,21 @@ timer_sleep (int64_t ticks)
     printf("Sleeping threads is not null in thread %s. Adding to the list.\n", thread_name());
     sleeping_threads = realloc(sleeping_threads, sizeof(*(sleeping_threads))  + sizeof(*t));
     int n = sizeof(*(sleeping_threads)) - sizeof(*t);
+
+    sema_down(&t->timer_sema);
   }
+
+  // for(int i = 0; i < sizeof(sleeping_threads); i++) {
+  //   printf("%s Ticks: %d\n", thread_name(), sleeping_threads[i].sleep_ticks);
+  // }
   
 
   // add_thread_to_list(thread_current());
 
 
   ASSERT (intr_get_level () == INTR_ON);
-  while (timer_elapsed (start) < ticks) 
-    thread_yield ();
+  // while (timer_elapsed (start) < ticks) 
+  //   thread_yield ();
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
@@ -196,6 +202,18 @@ static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
+
+  /* Iterate through the list and see if it needs to be woken up */
+  for(int i = 0; i < sizeof(sleeping_threads); i++) {
+    struct thread* t = thread_current();
+    if(sleeping_threads[i].sleep_ticks >= timer_ticks()) {
+      sema_up(&sleeping_threads[i].timer_sema);
+      
+    }
+
+  }
+
+
   thread_tick ();
 }
 
