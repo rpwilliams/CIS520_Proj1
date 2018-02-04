@@ -44,7 +44,7 @@ timer_init (void)
   /* Initialize the list */
   struct thread* t = thread_current();
   if(sleeping_threads == NULL) {
-    printf("Sleeping threads is null in thread %s Initializing...\n", thread_name());
+    // printf("Sleeping threads is null in thread %s Initializing...\n", thread_name());
     sleeping_threads = malloc(sizeof(*(sleeping_threads)) + sizeof(*t));
   }
 }
@@ -110,6 +110,7 @@ timer_sleep (int64_t ticks)
     printf("Sleeping threads is not null in thread %s. Adding to the list.\n", thread_name());
     sleeping_threads = realloc(sleeping_threads, sizeof(*(sleeping_threads))  + sizeof(*t));
     int n = sizeof(*(sleeping_threads)) - sizeof(*t);
+    sleeping_threads[n] = *t;
 
     sema_down(&t->timer_sema);
   }
@@ -206,9 +207,17 @@ timer_interrupt (struct intr_frame *args UNUSED)
   /* Iterate through the list and see if it needs to be woken up */
   for(int i = 0; i < sizeof(sleeping_threads); i++) {
     struct thread* t = thread_current();
-    if(sleeping_threads[i].sleep_ticks >= timer_ticks()) {
+
+    printf("Ticks: %d | Name: %s | Sleep ticks: %d | Timer_ticks(): %d\n",ticks, thread_name(), sleeping_threads[i].sleep_ticks, ticks);
+    if(sleeping_threads[i].sleep_ticks >= ticks) {
       sema_up(&sleeping_threads[i].timer_sema);
-      
+      printf("Ticks: %d | Name: %s | Sleep ticks: %d | Timer_ticks(): %d\n",ticks, thread_name(), sleeping_threads[i].sleep_ticks, ticks);
+
+      /* Remove the thread from the list */
+      for(int j = i; j < sizeof(sleeping_threads - 1); j++) {
+        sleeping_threads[j] = sleeping_threads[j+1];
+      }
+      sleeping_threads = realloc(sleeping_threads, sizeof(*(sleeping_threads))  - sizeof(*t));
     }
 
   }
