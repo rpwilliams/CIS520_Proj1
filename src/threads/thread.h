@@ -97,6 +97,9 @@ struct thread
     /* The thread's semaphore, owned by threads/synch.h */
     struct semaphore timer_sema;
 
+    /* The current ticks */
+    int64_t sleep_ticks;
+
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
