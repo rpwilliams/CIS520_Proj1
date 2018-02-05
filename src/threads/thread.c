@@ -581,6 +581,16 @@ allocate_tid (void)
 
   return tid;
 }
+
+/* Returns true if thread a has a shorter sleep time, returns false if thread
+ * b has a shorter sleep time */
+bool 
+sleep_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSED) {
+  const struct thread* thread_a = list_entry(a, struct thread, sleep_elem);
+  const struct thread* thread_b = list_entry(b, struct thread, sleep_elem);
+  return thread_a->sleep_ticks < thread_b->sleep_ticks;
+}
+
 
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
