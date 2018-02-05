@@ -40,13 +40,6 @@ timer_init (void)
 {
   pit_configure_channel (0, 2, TIMER_FREQ);
   intr_register_ext (0x20, timer_interrupt, "8254 Timer");
-
-  /* Initialize the list */
-  struct thread* t = thread_current();
-  if(sleeping_threads == NULL) {
-    // printf("Sleeping threads is null in thread %s Initializing...\n", thread_name());
-    sleeping_threads = malloc(sizeof(*(sleeping_threads)) + sizeof(*t));
-  }
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -102,30 +95,17 @@ timer_sleep (int64_t ticks)
   int64_t start = timer_ticks ();
 
   /* Get the total ticks, and add that as the sleeping ticks to the current thread */
-  int64_t wake_up_ticks = ticks + start;
+  int64_t current_ticks = ticks + start;
   struct thread* t = thread_current();
-  t->sleep_ticks = wake_up_ticks;
+  // *t->sleep_ticks = current_ticks;
 
-  if(sleeping_threads != NULL) {
-    printf("Sleeping threads is not null in thread %s. Adding to the list.\n", thread_name());
-    sleeping_threads = realloc(sleeping_threads, sizeof(*(sleeping_threads))  + sizeof(*t));
-    int n = sizeof(*(sleeping_threads)) - sizeof(*t);
-    sleeping_threads[n] = *t;
-
-    sema_down(&t->timer_sema);
-  }
-
-  // for(int i = 0; i < sizeof(sleeping_threads); i++) {
-  //   printf("%s Ticks: %d\n", thread_name(), sleeping_threads[i].sleep_ticks);
-  // }
-  
 
   // add_thread_to_list(thread_current());
 
 
   ASSERT (intr_get_level () == INTR_ON);
-  // while (timer_elapsed (start) < ticks) 
-  //   thread_yield ();
+  while (timer_elapsed (start) < ticks) 
+    thread_yield ();
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
@@ -203,24 +183,6 @@ static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
-
-  /* Iterate through the list and see if it needs to be woken up */
-  for(int i = 0; i < sizeof(sleeping_threads); i++) {
-    printf("Ticks: %d | Name: %s | Sleep ticks: %d | Timer_ticks(): %d\n",ticks, sleeping_threads[i].name, sleeping_threads[i].sleep_ticks, ticks);
-    if(sleeping_threads[i].sleep_ticks >= ticks) {
-      sema_up(&sleeping_threads[i].timer_sema);
-      printf("Ticks: %d | Name: %s | Sleep ticks: %d | Timer_ticks(): %d\n",ticks, thread_name(), sleeping_threads[i].sleep_ticks, ticks);
-
-      /* Remove the thread from the list */
-      for(int j = i; j < sizeof(sleeping_threads - 1); j++) {
-        sleeping_threads[j] = sleeping_threads[j+1];
-      }
-      sleeping_threads = realloc(sleeping_threads, sizeof(*(sleeping_threads))  - sizeof(sleeping_threads[i]));
-    }
-
-  }
-
-
   thread_tick ();
 }
 

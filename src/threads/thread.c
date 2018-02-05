@@ -37,9 +37,6 @@ static struct thread *initial_thread;
 /* Lock used by allocate_tid(). */
 static struct lock tid_lock;
 
-/* The list of sleeping threads */
-static struct thread* sleeping_threads;
-
 /* Stack frame for kernel_thread(). */
 struct kernel_thread_frame 
   {
