@@ -107,8 +107,8 @@ timer_sleep (int64_t ticks)
 
 
   ASSERT (intr_get_level () == INTR_ON);
-  //list_insert_ordered(&sleeping_threads, &t->sleep_elem, list_less_function, NULL);
-  list_insert(list_tail(&sleeping_threads), &t->sleep_elem);
+  list_insert_ordered(&sleeping_threads, &t->sleep_elem, sleep_order, NULL);
+  // list_insert(list_tail(&sleeping_threads), &t->sleep_elem);
   printf("%s is now sleeping\n", thread_name());
   sema_down(&t->timer_sema);
   // while (timer_elapsed (start) < ticks) 
@@ -189,8 +189,32 @@ timer_print_stats (void)
 static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
+  struct thread* t;
   ticks++;
   thread_tick ();
+
+  
+  //t = list_entry(sleeping_threads[i], struct thread, sleep_elem); 
+
+  // While loop to account for multiple threads waking up on the same tick
+  while(!list_empty(&sleeping_threads)) {
+    t = list_entry(list_front(&sleeping_threads), struct thread, sleep_elem);
+    if(ticks >= t->sleep_ticks) {
+      sema_up(&t->timer_sema);
+      list_pop_front(&sleeping_threads);
+    }
+    else {
+      break;
+    }
+    
+  }
+  // // struct thread* t = sleeping_threads[i];
+  // printf("%d sleep_ticks", t->sleep_ticks);
+  // if(t->sleep_ticks <= ticks) {
+  //   sema_up(&t->timer_sema);
+  // }
+  
+
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer
@@ -263,3 +287,4 @@ real_time_delay (int64_t num, int32_t denom)
   ASSERT (denom % 1000 == 0);
   busy_wait (loops_per_tick * num / 1000 * TIMER_FREQ / (denom / 1000)); 
 }
+
