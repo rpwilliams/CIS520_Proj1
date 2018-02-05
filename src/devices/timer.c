@@ -18,6 +18,7 @@
 #endif
 
 /* Number of timer ticks since OS booted. */
+
 static int64_t ticks;
 
 /* Number of loops per timer tick.
@@ -25,7 +26,7 @@ static int64_t ticks;
 static unsigned loops_per_tick;
 
 /* The list of sleeping threads */
-static struct thread* sleeping_threads;
+static struct list sleeping_threads;
 
 static intr_handler_func timer_interrupt;
 static bool too_many_loops (unsigned loops);
@@ -40,6 +41,8 @@ timer_init (void)
 {
   pit_configure_channel (0, 2, TIMER_FREQ);
   intr_register_ext (0x20, timer_interrupt, "8254 Timer");
+
+  list_init(&sleeping_threads);
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -95,17 +98,21 @@ timer_sleep (int64_t ticks)
   int64_t start = timer_ticks ();
 
   /* Get the total ticks, and add that as the sleeping ticks to the current thread */
-  int64_t current_ticks = ticks + start;
   struct thread* t = thread_current();
-  // *t->sleep_ticks = current_ticks;
+  t->sleep_ticks = ticks + start;
+  // *t->sleep_ticks = current_ticks; 
 
 
   // add_thread_to_list(thread_current());
 
 
   ASSERT (intr_get_level () == INTR_ON);
-  while (timer_elapsed (start) < ticks) 
-    thread_yield ();
+  //list_insert_ordered(&sleeping_threads, &t->sleep_elem, list_less_function, NULL);
+  list_insert(list_tail(&sleeping_threads), &t->sleep_elem);
+  printf("%s is now sleeping\n", thread_name());
+  sema_down(&t->timer_sema);
+  // while (timer_elapsed (start) < ticks) 
+  //   thread_yield ();
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
