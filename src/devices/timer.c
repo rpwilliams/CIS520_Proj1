@@ -100,11 +100,8 @@ timer_sleep (int64_t ticks)
   /* Get the total ticks, and add that as the sleeping ticks to the current thread */
   struct thread* t = thread_current();
   t->sleep_ticks = ticks + start;
-  // *t->sleep_ticks = current_ticks; 
-
 
   // add_thread_to_list(thread_current());
-
 
   // ASSERT (intr_get_level () == INTR_ON);
   list_insert_ordered(&sleeping_threads, &t->sleep_elem, sleep_order, NULL);
