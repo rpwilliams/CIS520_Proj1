@@ -6,8 +6,9 @@ CIS 520 - Programming Project #1
 
 >> Fill in the names and email addresses of your group members.
 
-FirstName LastName <email@k-state.edu>
-FirstName LastName <email@k-state.edu>
+Ryan Williams <rpwilliams96@k-state.edu>
+Mark Spicer <mspicer60@k-state.edu>
+Matthew Heffel <mgheffel@k-state.edu>
 ...
 
 ---- PRELIMINARIES ----
@@ -19,6 +20,8 @@ FirstName LastName <email@k-state.edu>
 >> preparing your submission, other than the Pintos documentation,
 >> course text, lecture notes, and course staff.
 
+https://github.com/ChristianJHughes/pintos-project1
+
 
                  ALARM CLOCK
                  ===========
@@ -28,32 +31,46 @@ FirstName LastName <email@k-state.edu>
 >> A1: Copy here the declaration of each new or changed `struct' or
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
+	
+	* threads/thread.h: struct semaphore timer_sema
+		- Adds an uninitialized semaphore to each thread. Initialized in threads.c.
+	* threads/thread.h: int64_t sleep_ticks
+		- Adds the current number of ticks to each thread so we know when to wake them up.
+		- Updated in devices/timer.c
+	* threads/thread.h: struct list_elem sleep_elem
+		- Adds a list element (list_elem) to each thread so that we can add each thread to a doubly linked list.
+	* devices/timer.c: static struct list sleeping_threads
+		- Doubly linked list provided by lib/list.c used to keep track of the sleeping threads.
 
 
 ---- ALGORITHMS ----
 
 >> A2: Briefly describe what happens in a call to your timer_sleep(),
 >> including the effects of the timer interrupt handler.
+	* Everytime timer_sleep() is called, the thread's current number of ticks is updated. The thread is then added to the list of sleeping_threads, "sleeping_threads".
+	* In timer_interrupt(), we check if the head (since the lowest is first) of the doubly linked list to see if the thread in that node is ready to be woken up. If it is, we wake that thread up (by using sema_up) and remove it from the list, which moves the head to head.next. 
 
 >> A3: What steps are taken to minimize the amount of time spent in
 >> the timer interrupt handler?
+	* Since the list is sorted, we only look at the head of the list. Unless multiple threads wake up on the same tick, we will never have to check if each node is ready to wake up -- only the head.
 
 
 ---- SYNCHRONIZATION ----
 
 >> A4: How are race conditions avoided when multiple threads call
 >> timer_sleep() simultaneously?
-
+	* The semaphore ensures that each thread is executed one at a time by putting the thread to sleep (sema_down) before its critical section is entered.
 
 >> A5: How are race conditions avoided when a timer interrupt occurs
 >> during a call to timer_sleep()?
-
+	
 
 ---- RATIONALE ----
 
 >> A6: Why did you choose this design?  In what ways is it superior to
 >> other designs that you considered?
-
+	* One option for a design is to turn interrupts off before entering the critical section. This would guarantee to avoid race conditions, but in general this is not a good option because it would not work on more than one CPU. That is why using a semaphore or a lock was the best option.
+	* Using a semaphore allowed us to have a solution to the race condition issue without turning off interrupts. We put it in a doubly linked list so that we could easily keep track of each thread that is asleep so that we know which threads still need to be woken up. We could have used another data structure, such as a stack or queue, but a linked list made the most sense so that we could easily add new threads, while keeping the thread closest to waking up at the beginning.
 
 
              PRIORITY SCHEDULING

@@ -95,16 +95,19 @@ timer_elapsed (int64_t then)
 void
 timer_sleep (int64_t ticks) 
 {
+  /* To account for alarm-negative */
+  if(ticks < 0) {
+    return;
+  }
+
   int64_t start = timer_ticks ();
 
   /* Get the total ticks, and add that as the sleeping ticks to the current thread */
   struct thread* t = thread_current();
   t->sleep_ticks = ticks + start;
 
-  // add_thread_to_list(thread_current());
-
-  // ASSERT (intr_get_level () == INTR_ON);
   list_insert_ordered(&sleeping_threads, &t->sleep_elem, sleep_order, NULL);
+  // list_push_back(&sleeping_threads, &t->sleep_elem);
   printf("%s is now sleeping\n", thread_name());
   sema_down(&t->timer_sema);
 }
