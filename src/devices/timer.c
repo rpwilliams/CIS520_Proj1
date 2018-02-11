@@ -95,8 +95,8 @@ timer_elapsed (int64_t then)
 void
 timer_sleep (int64_t ticks) 
 {
-  /* To account for alarm-negative */
-  if(ticks < 0) {
+  /* To account for alarm-negative and alarm-zero */
+  if(ticks <= 0) {
     return;
   }
 
@@ -106,8 +106,8 @@ timer_sleep (int64_t ticks)
   struct thread* t = thread_current();
   t->sleep_ticks = ticks + start;
 
-  list_insert_ordered(&sleeping_threads, &t->sleep_elem, sleep_order, NULL);
-  // list_push_back(&sleeping_threads, &t->sleep_elem);
+  // list_insert_ordered(&sleeping_threads, &t->sleep_elem, sleep_order, NULL);
+  list_push_back(&sleeping_threads, &t->sleep_elem);
   printf("%s is now sleeping\n", thread_name());
   sema_down(&t->timer_sema);
 }
@@ -186,21 +186,35 @@ timer_print_stats (void)
 static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
-  struct thread* t;
   ticks++;
   thread_tick ();
 
-  // While loop to account for multiple threads waking up on the same tick
-  while(!list_empty(&sleeping_threads)) {
-    t = list_entry(list_front(&sleeping_threads), struct thread, sleep_elem);
+  /* Check if a thread is ready to wake up (unordered version) */
+  struct list_elem *cnt = list_begin(&sleeping_threads);
+  while(cnt != list_end(&sleeping_threads)) {
+    struct thread* t = list_entry(cnt, struct thread, sleep_elem);
     if(ticks >= t->sleep_ticks) {
+      // printf("%s is now waking up\n", thread_name());
       sema_up(&t->timer_sema);
-      list_pop_front(&sleeping_threads);
+      cnt = list_remove(cnt);
     }
     else {
-      break;
+      cnt = list_next(cnt);
     }
   }
+
+  // While loop to account for multiple threads waking up on the same tick (ordered version)
+  // while(!list_empty(&sleeping_threads)) {
+  //   t = list_entry(list_front(&sleeping_threads), struct thread, sleep_elem);
+  //   if(ticks >= t->sleep_ticks) {
+  //     sema_up(&t->timer_sema);
+  //     list_pop_front(&sleeping_threads);
+  //   }
+  //   else {
+  //     break;
+  //   }
+  // }
+
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer

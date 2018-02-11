@@ -21,6 +21,7 @@ Matthew Heffel <mgheffel@k-state.edu>
 >> course text, lecture notes, and course staff.
 
 https://github.com/ChristianJHughes/pintos-project1
+https://github.com/nekketsuing/Pintos-Project-1/
 
 
                  ALARM CLOCK
