@@ -106,8 +106,8 @@ timer_sleep (int64_t ticks)
   struct thread* t = thread_current();
   t->sleep_ticks = ticks + start;
 
-  // list_insert_ordered(&sleeping_threads, &t->sleep_elem, sleep_order, NULL);
-  list_push_back(&sleeping_threads, &t->sleep_elem);
+  list_insert_ordered(&sleeping_threads, &t->sleep_elem, sleep_order, NULL);
+  // list_push_back(&sleeping_threads, &t->sleep_elem);
   printf("%s is now sleeping\n", thread_name());
   sema_down(&t->timer_sema);
 }
@@ -190,30 +190,33 @@ timer_interrupt (struct intr_frame *args UNUSED)
   thread_tick ();
 
   /* Check if a thread is ready to wake up (unordered version) */
-  struct list_elem *cnt = list_begin(&sleeping_threads);
-  while(cnt != list_end(&sleeping_threads)) {
-    struct thread* t = list_entry(cnt, struct thread, sleep_elem);
-    if(ticks >= t->sleep_ticks) {
-      // printf("%s is now waking up\n", thread_name());
-      sema_up(&t->timer_sema);
-      cnt = list_remove(cnt);
-    }
-    else {
-      cnt = list_next(cnt);
-    }
-  }
-
-  // While loop to account for multiple threads waking up on the same tick (ordered version)
-  // while(!list_empty(&sleeping_threads)) {
-  //   t = list_entry(list_front(&sleeping_threads), struct thread, sleep_elem);
+  // struct list_elem *cnt = list_begin(&sleeping_threads);
+  // while(cnt != list_end(&sleeping_threads)) {
+  //   struct thread* t = list_entry(cnt, struct thread, sleep_elem);
+  //   // While loop to account for multiple threads waking up at the same
   //   if(ticks >= t->sleep_ticks) {
-  //     sema_up(&t->timer_sema);
-  //     list_pop_front(&sleeping_threads);
+  //     // printf("%s is now waking up\n", thread_name());
+  //       sema_up(&t->timer_sema);
+  //       cnt = list_remove(cnt);    
   //   }
   //   else {
-  //     break;
+  //     cnt = list_next(cnt);
+  //     break; // Exit inner while loop
   //   }
+    
   // }
+
+  // While loop to account for multiple threads waking up on the same tick (ordered version)
+  while(!list_empty(&sleeping_threads)) {
+    struct thread* t = list_entry(list_front(&sleeping_threads), struct thread, sleep_elem);
+    if(ticks >= t->sleep_ticks) {
+      sema_up(&t->timer_sema);
+      list_pop_front(&sleeping_threads);
+    }
+    else {
+      break;
+    }
+  }
 
 }
 
