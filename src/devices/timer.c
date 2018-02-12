@@ -107,6 +107,8 @@ timer_sleep (int64_t ticks)
   t->sleep_ticks = ticks + start;
 
   list_insert_ordered(&sleeping_threads, &t->sleep_elem, sleep_order, NULL);
+  //list_entry(list_front(&sleeping_threads), struct thread, sleep_elem);
+
   // list_push_back(&sleeping_threads, &t->sleep_elem);
   printf("%s is now sleeping\n", thread_name());
   sema_down(&t->timer_sema);
@@ -186,6 +188,7 @@ timer_print_stats (void)
 static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
+  struct thread* t;
   ticks++;
   thread_tick ();
 
@@ -208,7 +211,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
 
   // While loop to account for multiple threads waking up on the same tick (ordered version)
   while(!list_empty(&sleeping_threads)) {
-    struct thread* t = list_entry(list_front(&sleeping_threads), struct thread, sleep_elem);
+    t = list_entry(list_front(&sleeping_threads), struct thread, sleep_elem);
     if(ticks >= t->sleep_ticks) {
       sema_up(&t->timer_sema);
       list_pop_front(&sleeping_threads);

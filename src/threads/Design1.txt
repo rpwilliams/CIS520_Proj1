@@ -36,20 +36,20 @@ https://github.com/nekketsuing/Pintos-Project-1/
 	* threads/thread.h: struct semaphore timer_sema
 		- Adds an uninitialized semaphore to each thread. Initialized in threads.c.
 	* threads/thread.h: int64_t sleep_ticks
-		- Adds the current number of ticks to each thread so we know when to wake them up.
+		- Adds a variable to each thread that tells us when that thread needs to wake up
 		- Updated in devices/timer.c
 	* threads/thread.h: struct list_elem sleep_elem
 		- Adds a list element (list_elem) to each thread so that we can add each thread to a doubly linked list.
 	* devices/timer.c: static struct list sleeping_threads
-		- Doubly linked list provided by lib/list.c used to keep track of the sleeping threads.
+		- Sorted doubly linked list provided by lib/list.c used to keep track of the sleeping threads.
 
 
 ---- ALGORITHMS ----
 
 >> A2: Briefly describe what happens in a call to your timer_sleep(),
 >> including the effects of the timer interrupt handler.
-	* Everytime timer_sleep() is called, the thread's current number of ticks is updated. The thread is then added to the list of sleeping_threads, "sleeping_threads".
-	* In timer_interrupt(), we check if the head (since the lowest is first) of the doubly linked list to see if the thread in that node is ready to be woken up. If it is, we wake that thread up (by using sema_up) and remove it from the list, which moves the head to head.next. 
+	* Everytime timer_sleep() is called, the thread's sleep_ticks is updated to the tick it should wake up on. The thread is then added to the list of sleeping_threads, "sleeping_threads".
+	* In timer_interrupt(), we check the head (since the lowest is first because it is sorted) of the doubly linked list to see if the thread in that node is ready to be woken up. If it is, we wake that thread up (by using sema_up) and remove it from the list, which moves the head to head.next. In the case that multiple threads need to be woken up at the same time, this is accounted for in a while loop.
 
 >> A3: What steps are taken to minimize the amount of time spent in
 >> the timer interrupt handler?
@@ -60,10 +60,11 @@ https://github.com/nekketsuing/Pintos-Project-1/
 
 >> A4: How are race conditions avoided when multiple threads call
 >> timer_sleep() simultaneously?
-	* The semaphore ensures that each thread is executed one at a time by putting the thread to sleep (sema_down) before its critical section is entered.
+	* By using a semaphore, each thread can only be added to the list one at a time. 
 
 >> A5: How are race conditions avoided when a timer interrupt occurs
 >> during a call to timer_sleep()?
+	*In timer_interrupt there is a check to see if the sleep_ticks value for a thread is less than or equal to the current tick. This means the thread will be woken up on the next interrupt even if it was missed on the tick it was supposed to wake up on. This avoids race conditions because it guarantees that what gets added to the list gets woken up eventually.
 	
 
 ---- RATIONALE ----
