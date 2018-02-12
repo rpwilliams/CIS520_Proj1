@@ -120,7 +120,7 @@ sema_up (struct semaphore *sema)
   /* 
     Ensures sema_up release the HIGHEST priority waking thread first, not the oldest 
    */
-  priority_check();
+  // priority_check();
   
   sema->value++;
   intr_set_level (old_level);
