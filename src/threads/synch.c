@@ -116,6 +116,12 @@ sema_up (struct semaphore *sema)
   if (!list_empty (&sema->waiters)) 
     thread_unblock (list_entry (list_pop_front (&sema->waiters),
                                 struct thread, elem));
+
+  /* 
+    Ensures sema_up release the HIGHEST priority waking thread first, not the oldest 
+   */
+  priority_check();
+  
   sema->value++;
   intr_set_level (old_level);
 }
