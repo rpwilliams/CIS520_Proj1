@@ -345,6 +345,19 @@ thread_get_priority (void)
   return thread_current ()->priority;
 }
 
+/*
+	Returns true if the READY thread has a higher priority than the CURRENT thread
+*/
+bool
+higher_priority(void) {
+	struct thread* t = thread_current();
+	struct thread* t_ready = list_entry(list_front(&ready_list), struct thread, sleep_elem);
+
+	int t_ready_priority  = t_ready->priority;
+	int t_priority = t->priority;
+	return t_priority <= t_ready_priority;
+}
+
 /* Sets the current thread's nice value to NICE. */
 void
 thread_set_nice (int nice UNUSED) 
