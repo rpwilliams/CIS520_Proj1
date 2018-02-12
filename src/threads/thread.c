@@ -349,7 +349,10 @@ thread_get_priority (void)
 	Returns true if the READY thread has a higher priority than the CURRENT thread
 */
 bool
-higher_priority(void) {
+ready_thread_higher_priority(void) {
+	if(list_empty(&ready_list)) {
+		return false;
+	}
 	struct thread* t = thread_current();
 	struct thread* t_ready = list_entry(list_front(&ready_list), struct thread, sleep_elem);
 

@@ -142,7 +142,7 @@ void thread_foreach (thread_action_func *, void *);
 
 int thread_get_priority (void);
 void thread_set_priority (int);
-bool higher_priority(void);
+bool ready_thread_higher_priority(void);
 
 int thread_get_nice (void);
 void thread_set_nice (int);
