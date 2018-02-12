@@ -308,7 +308,7 @@ thread_yield (void)
 
   old_level = intr_disable ();
   if (cur != idle_thread) 
-    list_push_back (&ready_list, &cur->elem);
+  	list_insert_ordered(&ready_list, &cur->elem, priority_order, NULL);
   cur->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
@@ -360,11 +360,16 @@ ready_thread_highest_priority(void) {
 
 void priority_check(void) {
 	enum intr_level old_level = intr_disable ();
+
 	if(!list_empty(&ready_list)) {
 		/* Pick a new thread to run */
-		if(ready_thread_highest_priority) {
-			thread_yield();
-		}
+		// if(ready_thread_highest_priority) {
+		// 	thread_yield();
+		// }
+		struct thread *t = list_entry(list_front(&ready_list), struct thread, sleep_elem);
+	    if (thread_current ()->priority < t->priority) {
+	      thread_yield ();
+	    }
 	}
 	intr_set_level(old_level);
 }
@@ -615,7 +620,13 @@ sleep_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUS
   return thread_a->sleep_ticks < thread_b->sleep_ticks;
 }
 
-
+bool 
+priority_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSED) {
+  const struct thread* thread_a = list_entry(a, struct thread, sleep_elem);
+  const struct thread* thread_b = list_entry(b, struct thread, sleep_elem);
+  return thread_a->priority < thread_b->priority;
+}
+
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);

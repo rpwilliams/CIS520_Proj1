@@ -151,4 +151,5 @@ int thread_get_recent_cpu (void);
 int thread_get_load_avg (void); 
 
 bool sleep_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSED);
+bool priority_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSED);
 #endif /* threads/thread.h */
