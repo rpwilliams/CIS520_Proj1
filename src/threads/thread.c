@@ -230,7 +230,8 @@ thread_unblock (struct thread *t)
 
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
-  list_push_back (&ready_list, &t->elem);
+  // list_push_back (&ready_list, &t->elem);
+  list_insert_ordered(&ready_list, &t->elem, priority_order, NULL);
   t->status = THREAD_READY;
   intr_set_level (old_level);
 }
@@ -344,7 +345,7 @@ thread_get_priority (void)
 bool
 ready_thread_highest_priority(void) {
 	struct thread* t = thread_current();
-	struct thread* t_ready = list_entry(list_front(&ready_list), struct thread, sleep_elem);
+	struct thread* t_ready = list_entry(list_front(&ready_list), struct thread, elem);
 
 	int t_ready_priority  = t_ready->priority;
 	int t_priority = t->priority;
@@ -359,7 +360,7 @@ void priority_check(void) {
 		// if(ready_thread_highest_priority) {
 		// 	thread_yield();
 		// }
-		struct thread *t = list_entry(list_front(&ready_list), struct thread, sleep_elem);
+		struct thread *t = list_entry(list_front(&ready_list), struct thread, elem);
 	    if (thread_current ()->priority < t->priority) {
 	      thread_yield ();
 	    }
@@ -610,7 +611,7 @@ bool
 priority_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSED) {
   const struct thread* thread_a = list_entry(a, struct thread, elem);
   const struct thread* thread_b = list_entry(b, struct thread, elem);
-  return thread_a->priority < thread_b->priority;
+  return thread_a->priority > thread_b->priority;
 }
 
 /* Offset of `stack' member within `struct thread'.
