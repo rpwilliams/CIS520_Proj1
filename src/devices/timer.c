@@ -110,7 +110,7 @@ timer_sleep (int64_t ticks)
   //list_entry(list_front(&sleeping_threads), struct thread, sleep_elem);
 
   // list_push_back(&sleeping_threads, &t->sleep_elem);
-  printf("%s is now sleeping\n", thread_name());
+  // printf("%s is now sleeping\n", thread_name());
   sema_down(&t->timer_sema);
 }
 
