@@ -22,6 +22,8 @@ Matthew Heffel <mgheffel@k-state.edu>
 
 https://github.com/ChristianJHughes/pintos-project1
 https://github.com/nekketsuing/Pintos-Project-1/
+https://github.com/microdog/pintos-project-1/
+https://www.researchgate.net/publication/313846154_PintOS-T02_Priority_Scheduling_of_Kernel_Threads_with_Priority_Donation_--_A_Guide_for_Students
 
 
                  ALARM CLOCK
