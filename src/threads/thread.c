@@ -166,6 +166,8 @@ thread_create (const char *name, int priority,
   struct switch_entry_frame *ef;
   struct switch_threads_frame *sf;
   tid_t tid;
+  enum intr_level old_level;
+
 
   ASSERT (function != NULL);
 
@@ -199,7 +201,7 @@ thread_create (const char *name, int priority,
   /*
 	Yield if the higher priority is ready as soon as the thread is created
   */
-  enum intr_level old_level;
+  old_level = intr_disable();
   priority_check();
   intr_set_level (old_level);
 
