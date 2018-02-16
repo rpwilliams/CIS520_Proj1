@@ -197,7 +197,7 @@ thread_create (const char *name, int priority,
   thread_unblock (t);
 
   /*
-	Yield if the higher priority is ready as soon as the thread starts
+	Yield if the higher priority is ready as soon as the thread is created
   */
   enum intr_level old_level;
   priority_check();
@@ -339,14 +339,20 @@ thread_set_priority (int new_priority)
   thread_current ()->priority = new_priority;
   
   //thread should yield if the no longer highest priority
-  if (!list_empty(&ready_list))
-  {
-	  struct thread *t = list_entry(list_front(&ready_list), struct thread, elem);
-	  if(thread_current()->priority < t->priority)
-	  {
-		  thread_yield();
-	  }
-  }
+  // if (!list_empty(&ready_list))
+  // {
+	 //  struct thread *t = list_entry(list_front(&ready_list), struct thread, elem);
+	 //  if(thread_current()->priority < t->priority)
+	 //  {
+		//   thread_yield();
+	 //  }
+  // }
+  /*
+	Thread should yield if the no longer highest priority
+  */
+  enum intr_level old_level;
+  priority_check();
+  intr_set_level (old_level);
   
 }
 
