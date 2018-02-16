@@ -371,14 +371,14 @@ void priority_check(void) {
 	enum intr_level old_level = intr_disable ();
 
 	if(!list_empty(&ready_list)) {
-    /* The first element of the ready list, which is the highest priority in the list */
-    struct thread *t = list_entry(list_front(&ready_list), struct thread, elem); 
+	    /* The first element of the ready list, which is the highest priority in the list */
+	    struct thread *t = list_entry(list_front(&ready_list), struct thread, elem); 
 
-    /* If the current thread's priority is smaller than the first element
-       in the ready list's priority, then yield */
-    if (thread_current ()->priority < t->priority) {
-      thread_yield ();
-    }
+	    /* If the current thread's priority is smaller than the first element
+	       in the ready list's priority, then yield */
+	    if (thread_current ()->priority < t->priority) {
+	      thread_yield ();
+	    }
 	}
 
 	intr_set_level(old_level);

@@ -110,7 +110,7 @@ sema_up (struct semaphore *sema)
   if (!list_empty (&sema->waiters)) {
     /* Ensure all of the threads waiting on the semaphore should be sorted by priority, not time */
     // (commented out b/c sema_down already adds it inserted)
-    list_sort(&sema->waiters, priority_order, NULL );
+    // list_sort(&sema->waiters, priority_order, NULL );
     thread_unblock (list_entry (list_pop_front (&sema->waiters),
                                 struct thread, elem));
   }

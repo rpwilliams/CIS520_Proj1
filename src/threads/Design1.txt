@@ -94,6 +94,13 @@ https://www.researchgate.net/publication/313846154_PintOS-T02_Priority_Schedulin
 >> B3: How do you ensure that the highest priority thread waiting for
 >> a lock, semaphore, or condition variable wakes up first?
 
+When sema_down is called, it is added IN ORDER to the list of sema->waiters. In sema_up,
+the thread that is unblocked will be the highest priority waiting semaphore thread, making it so the highest priority thread waiting for a semaphore will be woken up first. 
+
+We do a similar process with condition variables. Before signaling for a thread to be woken up in cond_signal, sorts the list of cond->waiters, ensuring that the highest priority waiter is always at the end of the list.
+
+TODO: Add locks
+
 >> B4: Describe the sequence of events when a call to lock_acquire()
 >> causes a priority donation.  How is nested donation handled?
 
