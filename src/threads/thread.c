@@ -196,6 +196,13 @@ thread_create (const char *name, int priority,
   /* Add to run queue. */
   thread_unblock (t);
 
+  /*
+	Yield if the higher priority is ready as soon as the thread starts
+  */
+  enum intr_level old_level;
+  priority_check();
+  intr_set_level (old_level);
+
   return tid;
 }
 
