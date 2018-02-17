@@ -229,9 +229,11 @@ lock_try_acquire (struct lock *lock)
   ASSERT (lock != NULL);
   ASSERT (!lock_held_by_current_thread (lock));
 
+  enum intr_level old_level = intr_disable ();
   success = sema_try_down (&lock->semaphore);
   if (success)
     lock->holder = thread_current ();
+  intr_set_level (old_level);
   return success;
 }
 
@@ -246,21 +248,13 @@ lock_release (struct lock *lock)
   ASSERT (lock_held_by_current_thread (lock));
 
   /* Remove all the threads waiting on the lock currently being released from the donation list */
-  if(!list_empty(&lock->holder->donated_list)) {
-    struct list_elem *index = list_begin(&lock->holder->donated_list);
-    while(index != list_end(&lock->holder->donated_list)) {
-      struct thread* t = list_entry(index, struct thread, donation_elem);
-      struct list_elem *next = list_next(index);
-      if(t->waiting_lock == lock) {
-        list_remove(index);
-      }
-      index = next;
-    }
-  }
-  
+  enum intr_level old_level = intr_disable ();
 
+  remove_donated_threads(lock);
   lock->holder = NULL;
+
   sema_up (&lock->semaphore);
+  intr_set_level (old_level);
 }
 
 /* Returns true if the current thread holds LOCK, false
@@ -378,5 +372,18 @@ cond_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSE
   struct thread *thread_b = list_entry(list_front(&sema_b->semaphore.waiters), struct thread, elem); 
 
   return thread_a->priority > thread_b->priority;
+}
+
+void
+remove_donated_threads(struct lock *lock) {
+ struct list_elem *index = list_begin(&lock->holder->donated_list);
+  while(index != list_end(&lock->holder->donated_list)) {
+    struct thread* t = list_entry(index, struct thread, donation_elem);
+    struct list_elem *next = list_next(index);
+    if(t->waiting_lock == lock) {
+      list_remove(index);
+    }
+    index = next;
+  }
 }
 
