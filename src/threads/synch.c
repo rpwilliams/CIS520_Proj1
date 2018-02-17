@@ -203,16 +203,17 @@ lock_acquire (struct lock *lock)
   enum intr_level old_level = intr_disable();
 
   /* If the lock already has a holder, add the current thread to the list of waiting threads */
-  if(lock->holder) {
+  if(lock->holder != NULL) {
     thread_current()->waiting_lock = lock;
     list_insert_ordered(&lock->holder->donated_list, &thread_current()->donation_elem, donation_order, NULL);
   }
 
-  /* Indicate we are no longer waiting on that lock */
-  thread_current()->waiting_lock = NULL;
-
   sema_down (&lock->semaphore);
   lock->holder = thread_current ();
+
+  /* Indicate we are no longer waiting on that lock */
+  thread_current()->waiting_lock = NULL;
+  
   intr_set_level(old_level);
 }
 

@@ -339,15 +339,34 @@ void
 thread_set_priority (int new_priority) 
 {
   thread_current ()->priority = new_priority;
-  
+  thread_current ()->init_priority = new_priority;
+  int old_priority = thread_current ()->priority;
 
+  if(!list_empty(&thread_current()->donated_list)) {
+    int max_list_priority = list_entry(list_front(&thread_current()->donated_list), struct thread, elem)->priority;
+    if(thread_current ()->priority < max_list_priority) {
+      thread_current ()->priority = max_list_priority;
+    }
+  }
 
 
   /*
 	Thread should yield if the no longer highest priority
   */
-  enum intr_level old_level;
-  priority_check();
+  enum intr_level old_level = intr_disable();
+
+
+  /* Donate the priority if the new priority is greater */
+  if(new_priority > old_priority) {
+    donation();
+  }
+  /* Check if you should yield if old priority is bigger*/
+  else {
+    priority_check();
+  }
+  
+
+
   intr_set_level (old_level);
   
 }
@@ -642,6 +661,23 @@ donation_order(const struct list_elem* a, const struct list_elem* b, void *aux U
   const struct thread* thread_a = list_entry(a, struct thread, donation_elem);
   const struct thread* thread_b = list_entry(b, struct thread, donation_elem);
   return thread_a->priority > thread_b->priority;
+}
+
+void 
+donation(struct thread* t, struct lock *l) {
+  /* If the locok holder is null, we have reached the last node and we are done */
+  if(l->holder == NULL) {
+    return; // Base Case
+  }
+  if(l->holder->priority < t->priority) {
+    l->holder->priority = t->priority;
+    t = l->holder;
+    l = t->waiting_lock;
+    donation(t, l);
+  }
+  else {
+    return;
+  }
 }
 
 /* Offset of `stack' member within `struct thread'.
