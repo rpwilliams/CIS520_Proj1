@@ -357,7 +357,7 @@ thread_set_priority (int new_priority)
 
 
   /* Donate the priority if the new priority is greater */
-  if(new_priority > old_priority) {
+  if(thread_current ()->priority > old_priority) {
     donation();
   }
   /* Check if you should yield if old priority is bigger*/
@@ -375,13 +375,14 @@ thread_set_priority (int new_priority)
 int
 thread_get_priority (void) 
 {
-  if(!list_empty(&thread_current()->donated_list)) {
-    int donated_priority = list_entry(list_front(&thread_current()->donated_list), struct thread, elem)->priority;
-    printf(donated_priority, "The donated priority is %d");
-    if(thread_current()->priority < donated_priority) {
-      return donated_priority;
-    } 
-  }
+  // if(!list_empty(&thread_current()->donated_list)) {
+  //   int donated_priority = list_entry(list_front(&thread_current()->donated_list), struct thread, elem)->priority;
+  //   printf(donated_priority, "The donated priority is %d");
+  //   if(thread_current()->priority < donated_priority) {
+  //     return donated_priority;
+  //   } 
+  // }
+  enum intr_level old_level = intr_disable();
   return thread_current()->priority;
 }
 
@@ -669,7 +670,7 @@ donation(struct thread* t, struct lock *l) {
   if(l->holder == NULL) {
     return; // Base Case
   }
-  if(l->holder->priority < t->priority) {
+  if(l->holder->priority <= t->priority) {
     l->holder->priority = t->priority;
     t = l->holder;
     l = t->waiting_lock;

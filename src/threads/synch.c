@@ -252,6 +252,7 @@ lock_release (struct lock *lock)
   enum intr_level old_level = intr_disable ();
 
   remove_donated_threads(lock);
+  restore_priority();
   lock->holder = NULL;
 
   sema_up (&lock->semaphore);
@@ -375,6 +376,9 @@ cond_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSE
   return thread_a->priority > thread_b->priority;
 }
 
+/*
+  When the lock has been released, remove every thread with that lock from its list
+*/
 void
 remove_donated_threads(struct lock *lock) {
  struct list_elem *index = list_begin(&lock->holder->donated_list);
@@ -388,3 +392,13 @@ remove_donated_threads(struct lock *lock) {
   }
 }
 
+void
+restore_priority() {
+  thread_current()->priority = thread_current()->init_priority;
+  if(!list_empty(&thread_current()->donated_list)) {
+    int max_list_priority = list_entry(list_front(&thread_current()->donated_list), struct thread, elem)->priority;
+    if(thread_current()->priority < max_list_priority) {
+      thread_current()->priority = max_list_priority;
+    }
+  }
+}
