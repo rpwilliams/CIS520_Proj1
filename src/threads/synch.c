@@ -202,6 +202,15 @@ lock_acquire (struct lock *lock)
 
   enum intr_level old_level = intr_disable();
 
+  /* If the lock already has a holder, add the current thread to the list of waiting threads */
+  if(lock->holder) {
+    thread_current()->waiting_lock = lock;
+    list_insert_ordered(&lock->holder->donated_list, &thread_current()->donation_elem, donation_order, NULL);
+  }
+
+  /* Indicate we are no longer waiting on that lock */
+  thread_current()->waiting_lock = NULL;
+
   sema_down (&lock->semaphore);
   lock->holder = thread_current ();
   intr_set_level(old_level);
@@ -235,6 +244,20 @@ lock_release (struct lock *lock)
 {
   ASSERT (lock != NULL);
   ASSERT (lock_held_by_current_thread (lock));
+
+  /* Remove all the threads waiting on the lock currently being released from the donation list */
+  if(!list_empty(&lock->holder->donated_list)) {
+    struct list_elem *index = list_begin(&lock->holder->donated_list);
+    while(index != list_end(&lock->holder->donated_list)) {
+      struct thread* t = list_entry(index, struct thread, donation_elem);
+      struct list_elem *next = list_next(index);
+      if(t->waiting_lock == lock) {
+        list_remove(index);
+      }
+      index = next;
+    }
+  }
+  
 
   lock->holder = NULL;
   sema_up (&lock->semaphore);
@@ -356,3 +379,4 @@ cond_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSE
 
   return thread_a->priority > thread_b->priority;
 }
+

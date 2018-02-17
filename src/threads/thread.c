@@ -340,15 +340,9 @@ thread_set_priority (int new_priority)
 {
   thread_current ()->priority = new_priority;
   
-  //thread should yield if the no longer highest priority
-  // if (!list_empty(&ready_list))
-  // {
-	 //  struct thread *t = list_entry(list_front(&ready_list), struct thread, elem);
-	 //  if(thread_current()->priority < t->priority)
-	 //  {
-		//   thread_yield();
-	 //  }
-  // }
+
+
+
   /*
 	Thread should yield if the no longer highest priority
   */
@@ -358,11 +352,18 @@ thread_set_priority (int new_priority)
   
 }
 
-/* Returns the current thread's priority. */
+/* Returns the current thread's priority (which will be the max of donated_priority and priority. */
 int
 thread_get_priority (void) 
 {
-  return thread_current ()->priority;
+  if(!list_empty(&thread_current()->donated_list)) {
+    int donated_priority = list_entry(list_front(&thread_current()->donated_list), struct thread, elem)->priority;
+    printf(donated_priority, "The donated priority is %d");
+    if(thread_current()->priority < donated_priority) {
+      return donated_priority;
+    } 
+  }
+  return thread_current()->priority;
 }
 
 /* Compare the priority of the current thread and the first element in the ready list
@@ -506,6 +507,7 @@ init_thread (struct thread *t, const char *name, int priority)
 
   /* Initialize the semaphore */
   sema_init(&t->timer_sema, 0);
+  list_init(&t->donated_list);
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
@@ -632,6 +634,13 @@ bool
 priority_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSED) {
   const struct thread* thread_a = list_entry(a, struct thread, elem);
   const struct thread* thread_b = list_entry(b, struct thread, elem);
+  return thread_a->priority > thread_b->priority;
+}
+
+bool 
+donation_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSED) {
+  const struct thread* thread_a = list_entry(a, struct thread, donation_elem);
+  const struct thread* thread_b = list_entry(b, struct thread, donation_elem);
   return thread_a->priority > thread_b->priority;
 }
 
