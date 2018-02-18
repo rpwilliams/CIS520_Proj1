@@ -37,6 +37,8 @@ static struct thread *initial_thread;
 /* Lock used by allocate_tid(). */
 static struct lock tid_lock;
 
+static const int MAX_DEPTH = 8;
+
 /* Stack frame for kernel_thread(). */
 struct kernel_thread_frame 
   {
@@ -668,25 +670,21 @@ donation_order(const struct list_elem* a, const struct list_elem* b, void *aux U
 
 void 
 donation() {
-  donation_helper(thread_current(), thread_current()->waiting_lock);
-}
-
-
-void 
-donation_helper(struct thread* t, struct lock *l, int count) {
-   If the locok holder is null, we have reached the last node and we are done 
-  if(!l->holder) {
-  	return;
+  struct thread* t = thread_current();
+  struct lock* l = thread_current()->waiting_lock;
+  int depth = 0;
+  while(l && depth < MAX_DEPTH) { 
+  	if(l->holder != NULL && l->holder->priority < t->priority) {
+  		l->holder->priority = t->priority;
+	    t = l->holder;
+	    l = t->waiting_lock;
+	    depth++;
+  	}
+  	else {
+  		return;
+  	}
   }
-  if(l->holder->priority >= t->priority) {
-  	return;
-  }   
-  l->holder->priority = t->priority;
-  t = l->holder;
-  l = t->waiting_lock;
-  donation_helper(t, l, count);
 }
-
 
 
 /* Offset of `stack' member within `struct thread'.
