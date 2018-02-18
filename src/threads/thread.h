@@ -159,6 +159,9 @@ void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void); 
 
+void donation(void);
+void donation_helper(struct thread* t, struct lock *l, int count);
+
 bool sleep_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSED);
 bool priority_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSED);
 bool donation_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSED);

@@ -338,37 +338,33 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority) 
 {
+  enum intr_level old_level = intr_disable();
+
   thread_current ()->priority = new_priority;
   thread_current ()->init_priority = new_priority;
   int old_priority = thread_current ()->priority;
 
+  /* If the head of this thread's list of donated priorities is a bigger priority, 
+  		then change this thread's priority to the head's priority */
   if(!list_empty(&thread_current()->donated_list)) {
-    int max_list_priority = list_entry(list_front(&thread_current()->donated_list), struct thread, elem)->priority;
+    int max_list_priority = list_entry(list_front(&thread_current()->donated_list), struct thread, donation_elem)->priority;
     if(thread_current ()->priority < max_list_priority) {
       thread_current ()->priority = max_list_priority;
     }
   }
 
-
-  /*
-	Thread should yield if the no longer highest priority
-  */
-  enum intr_level old_level = intr_disable();
-
-
-  /* Donate the priority if the new priority is greater */
+  /* If the donated list had a bigger priority that we set this thread's priority to, 
+  		then donate the priority to child threads */
   if(thread_current ()->priority > old_priority) {
+    // donation(thread_current(), thread_current()->waiting_lock);
     donation();
   }
-  /* Check if you should yield if old priority is bigger*/
-  else {
-    priority_check();
+  /* Otherwise, check if we should yield */
+  else if(thread_current ()->priority < old_priority) {
+    priority_check(); // Thread should yield if the no longer highest priority
   }
   
-
-
-  intr_set_level (old_level);
-  
+  intr_set_level (old_level); 
 }
 
 /* Returns the current thread's priority (which will be the max of donated_priority and priority. */
@@ -383,7 +379,9 @@ thread_get_priority (void)
   //   } 
   // }
   enum intr_level old_level = intr_disable();
-  return thread_current()->priority;
+  int priority = thread_current()->priority;
+  intr_set_level (old_level);
+  return priority;
 }
 
 /* Compare the priority of the current thread and the first element in the ready list
@@ -525,9 +523,13 @@ init_thread (struct thread *t, const char *name, int priority)
   list_push_back (&all_list, &t->allelem);
   intr_set_level (old_level);
 
+  /* Initialize priority donation */
+  t->init_priority = priority;
+  t->waiting_lock = NULL;
+  list_init(&t->donated_list);
+
   /* Initialize the semaphore */
   sema_init(&t->timer_sema, 0);
-  list_init(&t->donated_list);
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
@@ -665,21 +667,27 @@ donation_order(const struct list_elem* a, const struct list_elem* b, void *aux U
 }
 
 void 
-donation(struct thread* t, struct lock *l) {
-  /* If the locok holder is null, we have reached the last node and we are done */
-  if(l->holder == NULL) {
-    return; // Base Case
-  }
-  if(l->holder->priority <= t->priority) {
-    l->holder->priority = t->priority;
-    t = l->holder;
-    l = t->waiting_lock;
-    donation(t, l);
-  }
-  else {
-    return;
-  }
+donation() {
+  donation_helper(thread_current(), thread_current()->waiting_lock);
 }
+
+
+void 
+donation_helper(struct thread* t, struct lock *l, int count) {
+   If the locok holder is null, we have reached the last node and we are done 
+  if(!l->holder) {
+  	return;
+  }
+  if(l->holder->priority >= t->priority) {
+  	return;
+  }   
+  l->holder->priority = t->priority;
+  t = l->holder;
+  l = t->waiting_lock;
+  donation_helper(t, l, count);
+}
+
+
 
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
