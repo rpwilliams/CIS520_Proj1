@@ -62,7 +62,10 @@ sema_down (struct semaphore *sema)
   old_level = intr_disable ();
   while (sema->value == 0) 
     {
+      /* Ensure that sema_waiters gets sorted properly with donated priorities, not
+          regular priorities. */
       donation ();
+
       /* All of the threads waiting on the semaphore should be sorted by priority, not time */
       list_insert_ordered(&sema->waiters, &thread_current()->elem, priority_order, NULL);
       thread_block ();
@@ -319,7 +322,6 @@ cond_wait (struct condition *cond, struct lock *lock)
   ASSERT (lock_held_by_current_thread (lock));
   
   sema_init (&waiter.semaphore, 0);
-  // list_insert_ordered(&cond->waiters, &thread_current()->elem, cond_order, NULL);
   list_push_back (&cond->waiters, &waiter.elem);
   lock_release (lock);
   sema_down (&waiter.semaphore);
@@ -345,13 +347,6 @@ cond_signal (struct condition *cond, struct lock *lock UNUSED)
     sema_up (&list_entry (list_pop_front (&cond->waiters),
                           struct semaphore_elem, elem)->semaphore);
   }
-
-  /* If running in an interrupt context, current thread execution will be lost  */
-  //if(!intr_context()) {
-    /* Checks that sema_up release the HIGHEST priority waking thread first, not the oldest */
-   // priority_check();
-  //}
-
 }
 
 /* Wakes up all threads, if any, waiting on COND (protected by
@@ -369,6 +364,9 @@ cond_broadcast (struct condition *cond, struct lock *lock)
     cond_signal (cond, lock);
 }
 
+/*
+  Returns true if thread a has a higher priority than thread b
+*/
 bool 
 cond_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSED) {
   struct semaphore_elem *sema_a = list_entry(a, struct semaphore_elem, elem);
@@ -395,6 +393,10 @@ remove_donated_threads(struct lock *lock) {
   }
 }
 
+/*
+  Restores the threads priority to its initial priority OR the highest priority
+    left in its donation list
+*/
 void
 restore_priority(struct lock *lock) {
   lock->holder->priority = lock->holder->init_priority;

@@ -98,6 +98,7 @@ struct thread
     /* The list element for the the sleeping list */
     struct list_elem sleep_elem;
 
+    /* The list element for the list of donated threads */
     struct list_elem donation_elem;
 
     /* The thread's semaphore, owned by threads/synch.h */
@@ -160,7 +161,6 @@ int thread_get_recent_cpu (void);
 int thread_get_load_avg (void); 
 
 void donation(void);
-void donation_helper(struct thread* t, struct lock *l, int count);
 
 bool sleep_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSED);
 bool priority_order(const struct list_elem* a, const struct list_elem* b, void *aux UNUSED);
