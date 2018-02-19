@@ -15,20 +15,21 @@ Matthew Heffel <mgheffel@k-state.edu>
 
 >> If you have any preliminary comments on your submission, notes for
 >> the TA, or extra credit, please give them here.
-	* Our final "make check" test before submission had all alarm tests passing and all but 2 priority tests (priority-fifo and priority-change) passing, making the final result "9 out of 28 failed."
+	* Our final "make check" test before submission had all alarm tests passing and all but 2 priority tests (priority-fifo and priority-change) passing, making the final result "9 out of 28 failed." When testing everything, priority-fifo and priority-change will eventually time out. 
+	* On the first "make check", alarm-single will sometimes fail. If "make check" is run again, alarm-single will work. Alarm-single also works when tested individually.
 
 >> Please cite any offline or online sources you consulted while
 >> preparing your submission, other than the Pintos documentation,
 >> course text, lecture notes, and course staff.
 
-https://github.com/ChristianJHughes/pintos-project1
-https://github.com/nekketsuing/Pintos-Project-1/
-https://github.com/microdog/pintos-project-1/
-https://github.com/ryantimwilson/Pintos-Project-1/
-https://www.researchgate.net/publication/313846154_PintOS-T02_Priority_Scheduling_of_Kernel_Threads_with_Priority_Donation_--_A_Guide_for_Students
-https://uchicago-cs.github.io/mpcs52030/p0.html
-https://tssurya.wordpress.com/tag/pintos-project-1/
-ee.usc.edu/~redekopp/cs350/slides/CS350_Project1.pdf
+	https://github.com/ChristianJHughes/pintos-project1
+	https://github.com/nekketsuing/Pintos-Project-1/
+	https://github.com/microdog/pintos-project-1/
+	https://github.com/ryantimwilson/Pintos-Project-1/
+	https://www.researchgate.net/publication/313846154_PintOS-T02_Priority_Scheduling_of_Kernel_Threads_with_Priority_Donation_--_A_Guide_for_Students
+	https://uchicago-cs.github.io/mpcs52030/p0.html
+	https://tssurya.wordpress.com/tag/pintos-project-1/
+	ee.usc.edu/~redekopp/cs350/slides/CS350_Project1.pdf
 
 
                  ALARM CLOCK
@@ -67,7 +68,7 @@ ee.usc.edu/~redekopp/cs350/slides/CS350_Project1.pdf
 
 >> A4: How are race conditions avoided when multiple threads call
 >> timer_sleep() simultaneously?
-	* By using a semaphore, each thread can only be added to the list one at a time. 
+	* By using a semaphore, each thread can only be added to the list one at a time. This avoids race conditions by using mutual exclusion. 
 
 >> A5: How are race conditions avoided when a timer interrupt occurs
 >> during a call to timer_sleep()?
